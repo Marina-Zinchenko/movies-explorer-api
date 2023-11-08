@@ -23,21 +23,22 @@ module.exports.login = (req, res, next) => {
 
 module.exports.createUser = (req, res, next) => {
   const {
+    name,
     email,
     password,
-    name,
   } = req.body;
 
   bcrypt.hash(password, 10)
     .then((hash) => {
       User.create({
+        name,
         email,
         password: hash,
-        name,
       })
         .then((user) => res.status(201).send({
-          email: user.email,
           name: user.name,
+          _id: user._id,
+          email: user.email,
         }))
         .catch((err) => {
           if (err.name === 'MongoServerError' || err.code === 11000) {
@@ -53,8 +54,10 @@ module.exports.createUser = (req, res, next) => {
 };
 
 module.exports.getUsers = (req, res, next) => {
-  User.find({})
-    .then((users) => res.send(users))
+  const { _id } = req.user;
+  return User.findOne({ _id })
+    .orFail()
+    .then((user) => res.send(user))
     .catch(next);
 };
 
